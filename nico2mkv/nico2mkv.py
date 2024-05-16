@@ -36,7 +36,7 @@ if not importlib.util.find_spec("yt_dlp"):
 YTDLP_DIR = os.path.join(THIS_DIR, "yt-dlp")
 if not os.path.isdir(YTDLP_DIR):
     run(["git", "clone", "https://github.com/yt-dlp/yt-dlp"],     cwd=THIS_DIR)
-    run(["git", "checkout", "e3ce2b"],                            cwd=YTDLP_DIR)
+    run(["git", "checkout", "351dc0"],                            cwd=YTDLP_DIR)
     run(["git", "apply", os.path.join(THIS_DIR, "yt-dlp.patch")], cwd=YTDLP_DIR)
 
 # Download and patch danmaku2ass
@@ -58,7 +58,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--fps", dest="max_danmaku_fps", type=int, default=0, help="danmaku fps")
 parser.add_argument("--add-info", action="store_true", help="add video info as danmaku at the beginning of the video")
 parser.add_argument("--keep-files", action="store_true", help="do not remove intermediate files (for debugging)")
-parser.add_argument("--quality", default="b", help="video quality (yt-dlp -f flag)")
+parser.add_argument("--quality", default="bestvideo+bestaudio", help="video quality (yt-dlp -f flag)")
 parser.add_argument("videoID", type=argtype_nicovideo, help="video ID or URL")
 args = parser.parse_args()
 

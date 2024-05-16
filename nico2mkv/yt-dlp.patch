@@ -1,8 +1,8 @@
 diff --git a/yt_dlp/extractor/niconico.py b/yt_dlp/extractor/niconico.py
-index 797b5268a..5297b7e0f 100644
+index b04ce9615..03330a1aa 100644
 --- a/yt_dlp/extractor/niconico.py
 +++ b/yt_dlp/extractor/niconico.py
-@@ -391,7 +391,7 @@ def _real_extract(self, url):
+@@ -454,7 +454,7 @@ def _real_extract(self, url):
  
          try:
              webpage, handle = self._download_webpage_handle(
@@ -11,93 +11,7 @@ index 797b5268a..5297b7e0f 100644
              if video_id.startswith('so'):
                  video_id = self._match_id(handle.url)
  
-@@ -474,83 +474,22 @@ def get_video_info(*items, get_first=True, **kwargs):
-         }
- 
-     def _get_subtitles(self, video_id, api_data, session_api_data):
--        comment_user_key = traverse_obj(api_data, ('comment', 'keys', 'userKey'))
--        user_id_str = session_api_data.get('serviceUserId')
--
--        thread_ids = traverse_obj(api_data, ('comment', 'threads', lambda _, v: v['isActive']))
--        legacy_danmaku = self._extract_legacy_comments(video_id, thread_ids, user_id_str, comment_user_key) or []
--
-         new_comments = traverse_obj(api_data, ('comment', 'nvComment'))
-         new_danmaku = self._extract_new_comments(
-             new_comments.get('server'), video_id,
-             new_comments.get('params'), new_comments.get('threadKey'))
- 
--        if not legacy_danmaku and not new_danmaku:
-+        if not (type(new_danmaku) is list):
-             self.report_warning(f'Failed to get comments. {bug_reports_message()}')
-             return
- 
-         return {
-             'comments': [{
-                 'ext': 'json',
--                'data': json.dumps(legacy_danmaku + new_danmaku),
-+                'data': json.dumps(new_danmaku),
-             }],
-         }
- 
--    def _extract_legacy_comments(self, video_id, threads, user_id, user_key):
--        auth_data = {
--            'user_id': user_id,
--            'userkey': user_key,
--        } if user_id and user_key else {'user_id': ''}
--
--        api_url = traverse_obj(threads, (..., 'server'), get_all=False)
--
--        # Request Start
--        post_data = [{'ping': {'content': 'rs:0'}}]
--        for i, thread in enumerate(threads):
--            thread_id = thread['id']
--            thread_fork = thread['fork']
--            # Post Start (2N)
--            post_data.append({'ping': {'content': f'ps:{i * 2}'}})
--            post_data.append({'thread': {
--                'fork': thread_fork,
--                'language': 0,
--                'nicoru': 3,
--                'scores': 1,
--                'thread': thread_id,
--                'version': '20090904',
--                'with_global': 1,
--                **auth_data,
--            }})
--            # Post Final (2N)
--            post_data.append({'ping': {'content': f'pf:{i * 2}'}})
--
--            # Post Start (2N+1)
--            post_data.append({'ping': {'content': f'ps:{i * 2 + 1}'}})
--            post_data.append({'thread_leaves': {
--                # format is '<bottom of minute range>-<top of minute range>:<comments per minute>,<total last comments'
--                # unfortunately NND limits (deletes?) comment returns this way, so you're only able to grab the last 1000 per language
--                'content': '0-999999:999999,999999,nicoru:999999',
--                'fork': thread_fork,
--                'language': 0,
--                'nicoru': 3,
--                'scores': 1,
--                'thread': thread_id,
--                **auth_data,
--            }})
--            # Post Final (2N+1)
--            post_data.append({'ping': {'content': f'pf:{i * 2 + 1}'}})
--        # Request Final
--        post_data.append({'ping': {'content': 'rf:0'}})
--
--        return self._download_json(
--            f'{api_url}/api.json', video_id, data=json.dumps(post_data).encode(), fatal=False,
--            headers={
--                'Referer': f'https://www.nicovideo.jp/watch/{video_id}',
--                'Origin': 'https://www.nicovideo.jp',
--                'Content-Type': 'text/plain;charset=UTF-8',
--            },
--            note='Downloading comments', errnote=f'Failed to access endpoint {api_url}')
--
-     def _extract_new_comments(self, endpoint, video_id, params, thread_key):
-         comments = self._download_json(
-             f'{endpoint}/v1/threads', video_id, data=json.dumps({
-@@ -934,7 +873,7 @@ class NiconicoLiveIE(InfoExtractor):
+@@ -944,7 +944,7 @@ class NiconicoLiveIE(InfoExtractor):
  
      def _real_extract(self, url):
          video_id = self._match_id(url)
