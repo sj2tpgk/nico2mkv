@@ -1,8 +1,8 @@
 diff --git a/yt_dlp/extractor/niconico.py b/yt_dlp/extractor/niconico.py
-index b04ce9615..03330a1aa 100644
+index 179e7a9b1..253537843 100644
 --- a/yt_dlp/extractor/niconico.py
 +++ b/yt_dlp/extractor/niconico.py
-@@ -454,7 +454,7 @@ def _real_extract(self, url):
+@@ -450,7 +450,7 @@ def _real_extract(self, url):
  
          try:
              webpage, handle = self._download_webpage_handle(
@@ -11,7 +11,7 @@ index b04ce9615..03330a1aa 100644
              if video_id.startswith('so'):
                  video_id = self._match_id(handle.url)
  
-@@ -944,7 +944,7 @@ class NiconicoLiveIE(InfoExtractor):
+@@ -942,7 +942,7 @@ class NiconicoLiveIE(InfoExtractor):
  
      def _real_extract(self, url):
          video_id = self._match_id(url)

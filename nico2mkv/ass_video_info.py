@@ -16,13 +16,14 @@ s_desc = infojson["description"].replace("\n", r"\n") # real newline to backslas
 
 s_date = datetime.datetime.fromtimestamp(infojson["timestamp"]).strftime("%Y-%m-%d")
 
-dur = 03.00
-fs  = 12
-mx  = 10
-my  = fs * 2
-
 PlayResX = infojson["width"]
 PlayResY = infojson["height"]
+
+# geometry are designed for video size 640x360, and then adjusted
+dur = 03.20
+fs  = 12 * (PlayResY / 360)
+mx  = 10 * (PlayResX / 640)
+my  = fs * 2
 
 l_tags = 1 + s_tags.count(r"\n") # how many lines in s_tags
 y_tags = PlayResY - my

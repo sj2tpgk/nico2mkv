@@ -23,6 +23,11 @@ def decode(bs):
             pass
     assert False
 
+# Helper: get the number z/y with integer z that is nearest to x
+def nearestFrac(x, y):
+    z = int(x * y)
+    return z/y if (x - z/y) < 0.5 else (z+1)/y
+
 
 ### Setup
 
@@ -36,14 +41,14 @@ if not importlib.util.find_spec("yt_dlp"):
 YTDLP_DIR = os.path.join(THIS_DIR, "yt-dlp")
 if not os.path.isdir(YTDLP_DIR):
     run(["git", "clone", "https://github.com/yt-dlp/yt-dlp"],     cwd=THIS_DIR)
-    run(["git", "checkout", "351dc0"],                            cwd=YTDLP_DIR)
+    run(["git", "checkout", "4d9231"],                            cwd=YTDLP_DIR)
     run(["git", "apply", os.path.join(THIS_DIR, "yt-dlp.patch")], cwd=YTDLP_DIR)
 
 # Download and patch danmaku2ass
 DANMAKU2ASS_DIR = os.path.join(THIS_DIR, "danmaku2ass")
 if not os.path.isdir(DANMAKU2ASS_DIR):
     run(["git", "clone", "https://github.com/m13253/danmaku2ass"],     cwd=THIS_DIR)
-    run(["git", "checkout", "937dc9"],                                 cwd=DANMAKU2ASS_DIR)
+    run(["git", "checkout", "b1a9df"],                                 cwd=DANMAKU2ASS_DIR)
     run(["git", "apply", os.path.join(THIS_DIR, "danmaku2ass.patch")], cwd=DANMAKU2ASS_DIR)
 
 
@@ -83,16 +88,19 @@ res1 = run([
 
 with open(f"{base}.info.json", "rb") as f:
     info = json.loads(decode(f.read()))
-resolution = info["resolution"]
-duration = info["duration"]
+resolution = info["resolution"]  # ex. "640x360"
+height     = info["height"]      # ex. 360
+duration   = info["duration"]    # ex. 123.0 (seconds)
+fps        = info.get("fps", 30) # ex. 14.0
 
 # Create ass from yt-dlp output json
 run([
     "python", os.path.join(DANMAKU2ASS_DIR, "danmaku2ass.py"),
-    "-f", "NiconicoYtdlpJson",
-    "-a", "0.6",
-    "-s", resolution,
-    "-o", f"{base}.ass1",
+    "-f",  "NiconicoYtdlpJson",
+    "-a",  "0.6",
+    "-s",  resolution,
+    "-fs", str(24 * (height / 360)),
+    "-o",  f"{base}.ass1",
     f"{base}.comments.json"
 ], check=True)
 
@@ -101,7 +109,7 @@ if args.max_danmaku_fps > 0:
     with open(f"{base}.ass", "w") as f:
         run([
             "python", os.path.join(THIS_DIR, "ass_fps_limit.py"),
-            f"{base}.ass1", str(args.max_danmaku_fps), str(duration)
+            f"{base}.ass1", nearestFrac(1/args.max_danmaku_fps, fps), str(duration)
         ], check=True, stdout=f)
 else:
     shutil.copy(f"{base}.ass1", f"{base}.ass")
@@ -118,6 +126,7 @@ if args.add_info:
 run([
     "ffmpeg", "-y", "-v", "8",
     "-i", f"{base}.mp4",
+    "-itsoffset", "-0.2", # make subs 0.2 sec earlier
     "-i", f"{base}.ass",
     "-c", "copy",
     f"{base}.all.mkv"

@@ -5,15 +5,21 @@
 
 import re, sys
 
-def parseTime(t): # H:MM:SS.ff
+def parseTime(t): # H:MM:SS.ff or -H:MM:SS.ff; return sec (float)
+    if t.startswith("-"): return 0
     m = re.match(r"(\d+):(\d+):(\d+).(\d+)", t)
     return int(m[1]) * 3600 + int(m[2]) * 60 + int(m[3]) + int(m[4]) / 100
 
-def fmtTime(t):
-    h = int(t / 3600)
-    m = int((int(t) % 3600) / 60)
-    s = int(t) % 60
-    f = int((t % 1) * 100)
+def fmtTime(t): # t in sec
+    t = round(t*100) # int(round(t,2)*100) is wrong; try t=2.3
+    f = t % 100; t //= 100
+    s = t % 60; t //= 60
+    m = t % 60; t //= 60
+    h = t % 24
+    # h = t // 360000
+    # m = (t % 360000) // 6000 # int((int(t) % 3600) / 60)
+    # s = t % 6000 # int(t) % 60
+    # f = t % 100 # int((t % 1) * 1000)
     return f"{h:01}:{m:02}:{s:02}.{f:02}"
 
 def parseCmd(x):
@@ -29,7 +35,7 @@ def parseCmd(x):
     return True, x1, x2, y1, otherCmds, text
 
 infile = sys.argv[1]
-fps = int(sys.argv[2])
+fps = float(sys.argv[2])
 dur = float(sys.argv[3]) # video duration
 
 sys.stdout.reconfigure(encoding="utf-8")
