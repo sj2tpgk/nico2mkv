@@ -35,7 +35,7 @@ THIS_DIR = os.path.dirname(os.path.realpath(__file__)) # directory of script.py
 
 # Ensure yt-dlp dependencies are installed
 if not importlib.util.find_spec("yt_dlp"):
-    run(["pip", "install", "yt-dlp"])
+    run(["pip", "install", "--no-deps", "-U", "yt-dlp"])
 
 # Download and patch yt-dlp
 YTDLP_DIR = os.path.join(THIS_DIR, "yt-dlp")
@@ -110,7 +110,7 @@ if args.max_danmaku_fps > 0:
     with open(f"{base}.ass", "w") as f:
         run([
             "python", os.path.join(THIS_DIR, "ass_fps_limit.py"),
-            f"{base}.ass1", nearestFrac(1/args.max_danmaku_fps, fps), str(duration)
+            f"{base}.ass1", str(nearestFrac(1/args.max_danmaku_fps, fps)), str(duration)
         ], check=True, stdout=f)
 else:
     shutil.copy(f"{base}.ass1", f"{base}.ass")
