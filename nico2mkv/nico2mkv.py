@@ -1,4 +1,4 @@
-import argparse, importlib.util, json, os, re, shutil, subprocess, sys
+import argparse, datetime, importlib.util, json, os, re, shutil, subprocess, sys
 
 # Check required external programs are installed
 assert shutil.which("ffmpeg"), "ffmpeg is not installed"
@@ -92,6 +92,7 @@ resolution = info["resolution"]  # ex. "640x360"
 height     = info["height"]      # ex. 360
 duration   = info["duration"]    # ex. 123.0 (seconds)
 fps        = info.get("fps", 30) # ex. 14.0
+uploadDate = info["_api_data"]["video"]["registeredAt"] # ex. 2010-09-06T20:07:34+09:00
 
 # Create ass from yt-dlp output json
 run([
@@ -131,6 +132,12 @@ run([
     "-c", "copy",
     f"{base}.all.mkv"
 ], check=True)
+
+# Set output mtime to video upload date
+timestamp = datetime.datetime.fromisoformat(uploadDate).timestamp()
+for ext in ["all.mkv", "ass", "ass1", "comments.json", "info.json", "jpg", "mp4"]:
+    if os.path.exists(f"{base}.{ext}"):
+        os.utime(f"{base}.{ext}", (timestamp, timestamp))
 
 # Remove intermediate files (optional)
 if not args.keep_files:
