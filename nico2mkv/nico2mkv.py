@@ -23,11 +23,6 @@ def decode(bs):
             pass
     assert False
 
-# Helper: get the number z/y with integer z that is nearest to x
-def nearestFrac(x, y):
-    z = int(x * y)
-    return z/y if (x - z/y) < 0.5 else (z+1)/y
-
 
 ### Setup
 
@@ -110,7 +105,7 @@ if args.max_danmaku_fps > 0:
     with open(f"{base}.ass", "w") as f:
         run([
             "python", os.path.join(THIS_DIR, "ass_fps_limit.py"),
-            f"{base}.ass1", str(nearestFrac(1/args.max_danmaku_fps, fps)), str(duration)
+            f"{base}.ass1", str(fps), str(args.max_danmaku_fps), str(duration)
         ], check=True, stdout=f)
 else:
     shutil.copy(f"{base}.ass1", f"{base}.ass")
