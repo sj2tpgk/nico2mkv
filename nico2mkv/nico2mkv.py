@@ -59,27 +59,48 @@ parser.add_argument("--fps", dest="max_danmaku_fps", type=int, default=0, help="
 parser.add_argument("--add-info", action="store_true", help="add video info as danmaku at the beginning of the video")
 parser.add_argument("--keep-files", action="store_true", help="do not remove intermediate files (for debugging)")
 parser.add_argument("--quality", default="bestvideo+bestaudio", help="video quality (yt-dlp -f flag)")
+parser.add_argument("--regen", default="", help="regenerate .mkv (.comments.json and .info.json must exist. options quality and videoID are ignored)")
 parser.add_argument("videoID", type=argtype_nicovideo, help="video ID or URL")
 args = parser.parse_args()
 
-# Get filename of video to be created (and check availability online)
-res1 = run([
-    "python", os.path.join(YTDLP_DIR, "yt_dlp", "__main__.py"),
-    "--print", "filename",
-    f"https://www.nicovideo.jp/watch/{args.videoID}",
-], check=True, capture_output=True)
+if 0 == len(args.regen):
 
-base = re.search(r"(.*).mp4", decode(res1.stdout))[1]
+    # Get filename of video to be created (and check availability online)
+    res1 = run([
+        "python", os.path.join(YTDLP_DIR, "yt_dlp", "__main__.py"),
+        "--print", "filename",
+        f"https://www.nicovideo.jp/watch/{args.videoID}",
+    ], check=True, capture_output=True)
 
-# Download video, thumbnail, ass, info json
-res1 = run([
-    "python", os.path.join(YTDLP_DIR, "yt_dlp", "__main__.py"),
-    "-f", args.quality,
-    "--write-info-json", "--add-metadata",
-    "--write-thumbnail",
-    "--get-comments", "--write-sub", "--all-subs",
-    f"https://www.nicovideo.jp/watch/{args.videoID}",
-], check=True)
+    base = re.search(r"(.*).mp4", decode(res1.stdout))[1]
+
+    # Download video, thumbnail, ass, info json
+    run([
+        "python", os.path.join(YTDLP_DIR, "yt_dlp", "__main__.py"),
+        "-f", args.quality,
+        "--write-info-json", "--add-metadata",
+        "--write-thumbnail",
+        "--get-comments", "--write-sub", "--all-subs",
+        f"https://www.nicovideo.jp/watch/{args.videoID}",
+    ], check=True)
+
+else:
+
+    # (regenerate) get base name, check necessary files exist
+    assert args.regen.endswith(".mkv"), f"not ends with .mkv: {args.regen}"
+    assert os.path.exists(args.regen), f"does not exist: {args.regen}"
+    base = args.regen[:-4] # remove .mkv
+    assert os.path.exists(f"{base}.info.json"), f"does not exist: {base}.info.json"
+    assert os.path.exists(f"{base}.comments.json"), f"does not exist: {base}.comments.json"
+
+    # Extract video and audio (strip sub)
+    run([
+        "ffmpeg", "-y", "-v", "8",
+        "-i", f"{base}.mkv",
+        "-c", "copy",
+        f"{base}.mp4"
+    ])
+
 
 with open(f"{base}.info.json", "rb") as f:
     info = json.loads(decode(f.read()))
@@ -125,12 +146,12 @@ run([
     "-itsoffset", "-0.2", # make subs 0.2 sec earlier
     "-i", f"{base}.ass",
     "-c", "copy",
-    f"{base}.all.mkv"
+    f"{base}.mkv"
 ], check=True)
 
 # Set output mtime to video upload date
 timestamp = datetime.datetime.fromisoformat(uploadDate).timestamp()
-for ext in ["all.mkv", "ass", "ass1", "comments.json", "info.json", "jpg", "mp4"]:
+for ext in ["mkv", "ass", "ass1", "comments.json", "info.json", "jpg", "mp4"]:
     if os.path.exists(f"{base}.{ext}"):
         os.utime(f"{base}.{ext}", (timestamp, timestamp))
 
