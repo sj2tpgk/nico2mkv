@@ -47,6 +47,8 @@ vfps = int(float(sys.argv[2])) # video fps (check with e.g. ffmpeg)
 sfps = int(float(sys.argv[3])) # desired fps of subtitles
 dur = float(sys.argv[4]) # video duration
 
+sfps = min(sfps, vfps) # ensure vfps >= sfps
+
 numer = nearestFracNumer(1/sfps, vfps)
 print(f"ass_fps_limit: video fps={vfps}, subtitle desired fps={sfps}, subtitle output fps={vfps}/{numer}", file=sys.stderr)
 

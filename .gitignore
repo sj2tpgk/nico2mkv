@@ -2,3 +2,4 @@ nico2mkv/.venv-unix/
 nico2mkv/.venv-win/
 nico2mkv/yt-dlp/
 nico2mkv/danmaku2ass/
+*[ns]m[0-9][0-9][0-9]*
