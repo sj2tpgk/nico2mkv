@@ -58,8 +58,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--fps", dest="max_danmaku_fps", type=int, default=0, help="danmaku fps")
 parser.add_argument("--add-info", action="store_true", help="add video info as danmaku at the beginning of the video")
 parser.add_argument("--keep-files", action="store_true", help="do not remove intermediate files (for debugging)")
-parser.add_argument("--quality", default="bestvideo+bestaudio", help="video quality (yt-dlp -f flag)")
-parser.add_argument("--regen", default="", help="regenerate .mkv (.comments.json and .info.json must exist. options quality and videoID are ignored)")
+parser.add_argument("--yt-format", default="bestvideo+bestaudio", metavar="FORMAT", help="yt-dlp --format: video format i.e. quality")
+parser.add_argument("--yt-username", metavar="USERNAME", help="yt-dlp --username: account id")
+parser.add_argument("--yt-password", metavar="PASSWORD", help="yt-dlp --password: account password")
+parser.add_argument("--regen", default="", metavar="MKV", help="regenerate this .mkv (.comments.json and .info.json must exist and options videoID and yt-* are ignored)")
 parser.add_argument("videoID", type=argtype_nicovideo, help="video ID or URL")
 args = parser.parse_args()
 
@@ -68,6 +70,8 @@ if 0 == len(args.regen):
     # Get filename of video to be created (and check availability online)
     res1 = run([
         "python", os.path.join(YTDLP_DIR, "yt_dlp", "__main__.py"),
+        *([] if not args.yt_username else ["--username", args.yt_username]),
+        *([] if not args.yt_password else ["--password", args.yt_password]),
         "--print", "filename",
         f"https://www.nicovideo.jp/watch/{args.videoID}",
     ], check=True, capture_output=True)
@@ -77,7 +81,9 @@ if 0 == len(args.regen):
     # Download video, thumbnail, ass, info json
     run([
         "python", os.path.join(YTDLP_DIR, "yt_dlp", "__main__.py"),
-        "-f", args.quality,
+        *([] if not args.yt_username else ["--username", args.yt_username]),
+        *([] if not args.yt_password else ["--password", args.yt_password]),
+        "-f", args.yt_format,
         "--write-info-json", "--add-metadata",
         "--write-thumbnail",
         "--get-comments", "--write-sub", "--all-subs",
