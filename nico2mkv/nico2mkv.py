@@ -61,6 +61,7 @@ parser.add_argument("--keep-files", action="store_true", help="do not remove int
 parser.add_argument("--yt-format", default="bestvideo+bestaudio", metavar="FORMAT", help="yt-dlp --format: video format i.e. quality")
 parser.add_argument("--yt-username", metavar="USERNAME", help="yt-dlp --username: account id")
 parser.add_argument("--yt-password", metavar="PASSWORD", help="yt-dlp --password: account password")
+parser.add_argument("--extension-picky-0", action="store_true", help="yt-dlp: pass \"--extension-picky 0\" to ffmpeg; workaround for allowed extension error")
 parser.add_argument("--regen", default="", metavar="MKV", help="regenerate this .mkv (.comments.json and .info.json must exist and options videoID and yt-* are ignored)")
 parser.add_argument("videoID", type=argtype_nicovideo, help="video ID or URL")
 args = parser.parse_args()
@@ -83,6 +84,7 @@ if 0 == len(args.regen):
         "python", os.path.join(YTDLP_DIR, "yt_dlp", "__main__.py"),
         *([] if not args.yt_username else ["--username", args.yt_username]),
         *([] if not args.yt_password else ["--password", args.yt_password]),
+        *([] if not args.extension_picky_0 else ["--downloader-args", "ffmpeg_i1:-extension_picky 0"]),
         "-f", args.yt_format,
         "--write-info-json", "--add-metadata",
         "--write-thumbnail",
