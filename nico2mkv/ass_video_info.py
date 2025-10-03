@@ -39,9 +39,9 @@ dic1 = {
 # force writing in utf-8
 print(r"""
 [V4+ Styles]
-Style: ColorC, Droid Sans Japanese, {fs}, &H00FFFFbb, &H00FFFFbb, &H66000000, &H66000000, 0, 0, 0, 0, 100, 100, 0.00, 0.00, 1, 2, 0, 7, 0, 0, 0, 0
-Style: ColorM, Droid Sans Japanese, {fs}, &H00FFbbFF, &H00FFFFbb, &H66000000, &H66000000, 0, 0, 0, 0, 100, 100, 0.00, 0.00, 1, 2, 0, 7, 0, 0, 0, 0
-Style: ColorY, Droid Sans Japanese, {fs}, &H00bbFFFF, &H00bbFFFF, &H66000000, &H66000000, 0, 0, 0, 0, 100, 100, 0.00, 0.00, 1, 2, 0, 7, 0, 0, 0, 0
+Style: ColorC, sans-serif, {fs}, &H00FFFFbb, &H00FFFFbb, &H66000000, &H66000000, 0, 0, 0, 0, 100, 100, 0.00, 0.00, 1, 2, 0, 7, 0, 0, 0, 0
+Style: ColorM, sans-serif, {fs}, &H00FFbbFF, &H00FFFFbb, &H66000000, &H66000000, 0, 0, 0, 0, 100, 100, 0.00, 0.00, 1, 2, 0, 7, 0, 0, 0, 0
+Style: ColorY, sans-serif, {fs}, &H00bbFFFF, &H00bbFFFF, &H66000000, &H66000000, 0, 0, 0, 0, 100, 100, 0.00, 0.00, 1, 2, 0, 7, 0, 0, 0, 0
 [Events]
 Dialogue: 2,0:00:00.00,0:00:{dur},ColorY,,0000,0000,0000,,{{\\an1}}{{\\pos({mx},{y_tags})}}{s_tags}
 Dialogue: 2,0:00:00.00,0:00:{dur},ColorC,,0000,0000,0000,,{{\\an1}}{{\\pos({mx},{y_desc})}}{s_desc}

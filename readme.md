@@ -28,7 +28,14 @@ To play the video, use a player with mkv subtitle support: `mpv`, `parole` etc.
 ```
 mpv --sub=1 XXXX.mkv
 ```
- 
+
+
+## Troubleshooting
+
+- Problem: Emoji is not shown with mpv
+
+  Solution: Install a *monochrome* emoji font such as [Noto-Emoji-Monochrome](https://github.com/zjaco13/Noto-Emoji-Monochrome). You may additionally need `--sub-font='Note Emoji Medium'` option. ([relevant github issue](https://github.com/mpv-player/mpv/issues/8919#issuecomment-1823566773))
+
 
 ## Options
 ```
