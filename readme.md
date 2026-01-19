@@ -39,7 +39,8 @@ mpv --sub=1 XXXX.mkv
 
 ## Options
 ```
-usage: nico2mkv.py [-h] [--fps MAX_DANMAKU_FPS] [--add-info] [--keep-files] [--quality QUALITY]
+usage: nico2mkv.py [-h] [--fps MAX_DANMAKU_FPS] [--add-info] [--keep-files] [--yt-format FORMAT] [--yt-username USERNAME]
+                   [--yt-password PASSWORD] [--extension-picky-0] [--regen MKV]
                    videoID
 
 positional arguments:
@@ -51,7 +52,13 @@ options:
                         danmaku fps
   --add-info            add video info as danmaku at the beginning of the video
   --keep-files          do not remove intermediate files (for debugging)
-  --quality QUALITY     video quality (yt-dlp -f flag)
+  --yt-format FORMAT    yt-dlp --format: video format i.e. quality
+  --yt-username USERNAME
+                        yt-dlp --username: account id
+  --yt-password PASSWORD
+                        yt-dlp --password: account password
+  --extension-picky-0   yt-dlp: pass "--extension-picky 0" to ffmpeg; workaround for allowed extension error
+  --regen MKV           regenerate this .mkv (.comments.json and .info.json must exist and options videoID and yt-* are ignored)
 ```
 
 
