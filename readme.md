@@ -36,6 +36,10 @@ mpv --sub=1 XXXX.mkv
 
   Solution: Install a *monochrome* emoji font such as [Noto-Emoji-Monochrome](https://github.com/zjaco13/Noto-Emoji-Monochrome). You may additionally need `--sub-font='Note Emoji Medium'` option. ([relevant github issue](https://github.com/mpv-player/mpv/issues/8919#issuecomment-1823566773))
 
+- Problem: Video has been removed on niconico, but I have at least one of video, comment data or video metadata.
+
+  Solution: If video is missing, try searching in youtube/bilibili/youku for reposts (or create a dummy video of the same duration). If comment data or video metadata is missing, try salvaging from NII ニコニコ動画コメント等データ (create account and download/transform data with `salvage_json` script). ニコログ also helps salvagint metadata. In either case, prepare TITLE.mkv, TITLE.comments.json, TITLE.info.json, and run `nico2mkv.bash --regen TITLE.mkv`
+
 
 ## Options
 ```

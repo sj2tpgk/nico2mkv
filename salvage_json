@@ -1,0 +1,81 @@
+#!/bin/bash -e
+set -o pipefail
+
+# Salvage video metadata/comments from NII
+# Assumes the raw video file is available (from other video websites), but at least you can use blank video to simulate comments.
+# Usage:
+#   1. register at NII
+#   2. ./json-archive mail@xxx.com/0123456789abcdef smXXXXXXXX 2018 640 360
+#   3. prepare video file of the same base name and .mkv extension
+#   4. nico2mkv.bash --fps 6 --add-info --regen XXX.mkv
+
+[ $# -ge 3 ] || { echo "Usage: $0 <login> <id> <year> [maxcom=4.5]"; exit 1; }
+login=${1:-mail@xxx.com/0123456789abcdef}
+id=${2:-sm26874345}
+year=${3:-2016}
+export maxcom=${4:-3.5} # Max number of comments are ($maxcom * duration). If exceeds, newer comments are discarded
+
+PREFIX=https://dlsv.dsc.nii.ac.jp/idr/"$login"/nicocomm
+CACHEDIR=nicocache/cache
+OUTDIR=nicocache/out
+mkdir -p "$CACHEDIR" "$OUTDIR"
+id4=$(( $(printf "%08d" "${id#??}") / 10000 ))
+
+jqlib='
+def unixToJST:(todate[:-1]+"+09:00");
+'
+
+to_date(){
+    case "$1" in
+        (2018) echo 20181214 ;;
+        (2016) echo 20161216 ;;
+        (*) exit 1 ;;
+    esac
+}
+
+dl_vid(){
+    local base="$CACHEDIR/$year-v-$id4"
+    case "$year" in
+        (2013)
+            wget -nc -nv -O "$base.gz" "$PREFIX/data.20130427/video/$id4.dat.gz"
+            gzip -dkc "$base.gz" | jq -r --arg id "$id" 'select(.video_id==$id)' \
+                | jq -a "$jqlib"'{
+                    title:.title,duration:.length,fps:30,_api_data:{video:{registeredAt:(.upload_time)}},
+                    timestamp:(.upload_time[:19]+"Z"|fromdate-(3600*9)),tags:[.tags[].tag],description:(.description|gsub("<br */?>";"\n";null))}'
+            ;;
+        (2016|2018)
+            wget -nc -nv -O "$base.zip" "$PREFIX/data.$(to_date "$year")/video/$id4.zip"
+            unzip -p "$base.zip" | jq -r --arg id "$id" 'select(.video_id==$id)' \
+                | jq -a "$jqlib"'{
+                    title:.title,duration:.length,fps:30,_api_data:{video:{registeredAt:(.upload_time|unixToJST)}},
+                    timestamp:.upload_time,tags:.tags,description:(.description|gsub("<br */?>";"\n";null))}'
+            ;;
+        (*) exit 1 ;;
+    esac
+}
+
+dl_com(){
+    local base="$CACHEDIR/$year-c-$id4"
+    local max=$1
+    case "$year" in
+        (2013)
+            wget -nc -nv -O "$base.tar.gz" "$PREFIX/data.20130427/thread/$id4.tar.gz"
+            tar Oxzf "$base.tar.gz" "$id4/$id.dat" \
+                | jq -a -s --arg max "$max" "$jqlib"'to_entries[:($max|tonumber|floor)]|map({no:.key}+(.value|{vposMs:.vpos*10,postedAt:(.date|unixToJST),body:.comment,commands:((.command//"")|split(" "))}))'
+            ;;
+        (2016|2018)
+            wget -nc -nv -O "$base.zip" "$PREFIX/data.$(to_date "$year")/comment/$id4.zip"
+            unzip -p "$base.zip" "$id4/$id.jsonl" \
+                | jq -a -s --arg max "$max" "$jqlib"'to_entries[:($max|tonumber|floor)]|map({no:.key}+(.value|{vposMs:.vpos*10,postedAt:(.date|unixToJST),body:.content,commands:((.command//"")|split(" "))}))'
+            ;;
+        (*) exit 1 ;;
+    esac
+}
+
+info=$(dl_vid)
+[[ "$info" ]] || { echo "Video info not found"; exit 1; }
+max=$(echo "$info" | jq '.duration*($ENV.maxcom|tonumber)|floor')
+com=$(dl_com "$max")
+title=$(echo "$info" | jq -r '.title')
+echo "$info" > "$OUTDIR/$title [$id].info.json"
+echo "$com" > "$OUTDIR/$title [$id].comments.json"

@@ -63,8 +63,10 @@ parser.add_argument("--yt-username", metavar="USERNAME", help="yt-dlp --username
 parser.add_argument("--yt-password", metavar="PASSWORD", help="yt-dlp --password: account password")
 parser.add_argument("--extension-picky-0", action="store_true", help="yt-dlp: pass \"--extension-picky 0\" to ffmpeg; workaround for allowed extension error")
 parser.add_argument("--regen", default="", metavar="MKV", help="regenerate this .mkv (.comments.json and .info.json must exist and options videoID and yt-* are ignored)")
-parser.add_argument("videoID", type=argtype_nicovideo, help="video ID or URL")
+parser.add_argument("videoID", type=argtype_nicovideo, help="video ID or URL", nargs="?")
 args = parser.parse_args()
+
+assert not ((0 == len(args.regen)) and (args.videoID is None)), "videoID is required unless --regen"
 
 if 0 == len(args.regen):
 
@@ -112,18 +114,27 @@ else:
 
 with open(f"{base}.info.json", "rb") as f:
     info = json.loads(decode(f.read()))
-resolution = info["resolution"]  # ex. "640x360"
-height     = info["height"]      # ex. 360
 duration   = info["duration"]    # ex. 123.0 (seconds)
 fps        = info.get("fps", 30) # ex. 14.0
 uploadDate = info["_api_data"]["video"]["registeredAt"] # ex. 2010-09-06T20:07:34+09:00
+
+# Get video resolution (the info json contains this, but incovenient when regenerating)
+res_ffp = run([
+    "ffprobe", "-v", "error",
+    "-select_streams", "v:0", "-show_entries", "stream=width,height", "-output_format", "json",
+    f"{base}.mkv",
+], check=True, capture_output=True)
+# json_ffp = json.loads(res_ffp.stdout.decode())
+# width, height = json_ffp["streams"][0]["width"], json_ffp["streams"][0]["height"]
+width, height = (lambda x: (x["width"], x["height"]))(json.loads(res_ffp.stdout.decode())["streams"][0])
+assert type(width) is int and type(height) is int, f"not int: {width}, {height}"
 
 # Create ass from yt-dlp output json
 run([
     "python", os.path.join(DANMAKU2ASS_DIR, "danmaku2ass.py"),
     "-f",  "NiconicoYtdlpJson",
     "-a",  "0.6",
-    "-s",  resolution,
+    "-s",  f"{width}x{height}",
     "-fs", str(24 * (height / 360)),
     "-o",  f"{base}.ass1",
     f"{base}.comments.json"
@@ -145,6 +156,7 @@ if args.add_info:
         run([
             "python", os.path.join(THIS_DIR, "ass_video_info.py"),
             f"{base}.info.json",
+            str(width), str(height)
         ], check=True, stdout=f)
 
 # Combine video and ass into mkv

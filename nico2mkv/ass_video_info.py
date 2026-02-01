@@ -3,6 +3,9 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 infojson = json.load(open(sys.argv[1], "r", encoding="utf-8"))
 
+PlayResX = int(sys.argv[2])
+PlayResY = int(sys.argv[3])
+
 s_tags = ""
 tmp = ""
 for i, tag in enumerate(infojson["tags"]):
@@ -15,9 +18,6 @@ for i, tag in enumerate(infojson["tags"]):
 s_desc = infojson["description"].replace("\n", r"\n") # real newline to backslash + n
 
 s_date = datetime.datetime.fromtimestamp(infojson["timestamp"]).strftime("%Y-%m-%d")
-
-PlayResX = infojson["width"]
-PlayResY = infojson["height"]
 
 # geometry are designed for video size 640x360, and then adjusted
 dur = 03.20
