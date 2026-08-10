@@ -36,6 +36,10 @@ mpv --sub=1 XXXX.mkv
 
   Solution: Install a *monochrome* emoji font such as [Noto-Emoji-Monochrome](https://github.com/zjaco13/Noto-Emoji-Monochrome). You may additionally need `--sub-font='Note Emoji Medium'` option. ([relevant github issue](https://github.com/mpv-player/mpv/issues/8919#issuecomment-1823566773))
 
+- Problem: Cannot download video ("login required")
+
+  Solution: Export cookies.txt from web browser (there are browser add-ons for it) and pass it to nico2mkv with `--yt-cookies cookies.txt`. Note that, as of early Aug 2026, login via username/password does not work (like due to cloudflare).
+
 - Problem: Video has been removed on niconico, but I have at least one of video, comment data or video metadata.
 
   Solution: If video is missing, try searching in youtube/bilibili/youku for reposts (or create a dummy video of the same duration). If comment data or video metadata is missing, try salvaging from NII ニコニコ動画コメント等データ (create account and download/transform data with `salvage_json` script). ニコログ also helps salvagint metadata. In either case, prepare TITLE.mkv, TITLE.comments.json, TITLE.info.json, and run `nico2mkv.bash --regen TITLE.mkv`
@@ -43,9 +47,9 @@ mpv --sub=1 XXXX.mkv
 
 ## Options
 ```
-usage: nico2mkv.py [-h] [--fps MAX_DANMAKU_FPS] [--add-info] [--keep-files] [--yt-format FORMAT] [--yt-username USERNAME]
-                   [--yt-password PASSWORD] [--extension-picky-0] [--regen MKV]
-                   videoID
+usage: nico2mkv.py [-h] [--fps MAX_DANMAKU_FPS] [--add-info] [--keep-files] [--yt-format FORMAT] [--yt-username USERNAME] [--yt-password PASSWORD]
+                   [--yt-cookies FILE] [--extension-picky-0] [--regen MKV]
+                   [videoID]
 
 positional arguments:
   videoID               video ID or URL
@@ -61,6 +65,7 @@ options:
                         yt-dlp --username: account id
   --yt-password PASSWORD
                         yt-dlp --password: account password
+  --yt-cookies FILE     yt-dlp --cookies: cookies file
   --extension-picky-0   yt-dlp: pass "--extension-picky 0" to ffmpeg; workaround for allowed extension error
   --regen MKV           regenerate this .mkv (.comments.json and .info.json must exist and options videoID and yt-* are ignored)
 ```

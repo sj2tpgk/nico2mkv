@@ -34,10 +34,10 @@ if not importlib.util.find_spec("yt_dlp"):
 
 # Download and patch yt-dlp
 YTDLP_DIR = os.path.join(THIS_DIR, "yt-dlp")
-if not os.path.isdir(YTDLP_DIR):
-    run(["git", "clone", "https://github.com/yt-dlp/yt-dlp"],     cwd=THIS_DIR)
-    run(["git", "checkout", "4d9231"],                            cwd=YTDLP_DIR)
-    run(["git", "apply", os.path.join(THIS_DIR, "yt-dlp.patch")], cwd=YTDLP_DIR)
+# if not os.path.isdir(YTDLP_DIR):
+#     run(["git", "clone", "https://github.com/yt-dlp/yt-dlp"],     cwd=THIS_DIR)
+#     run(["git", "checkout", "4d9231"],                            cwd=YTDLP_DIR)
+#     run(["git", "apply", os.path.join(THIS_DIR, "yt-dlp.patch")], cwd=YTDLP_DIR)
 
 # Download and patch danmaku2ass
 DANMAKU2ASS_DIR = os.path.join(THIS_DIR, "danmaku2ass")
@@ -61,6 +61,7 @@ parser.add_argument("--keep-files", action="store_true", help="do not remove int
 parser.add_argument("--yt-format", default="bestvideo+bestaudio", metavar="FORMAT", help="yt-dlp --format: video format i.e. quality")
 parser.add_argument("--yt-username", metavar="USERNAME", help="yt-dlp --username: account id")
 parser.add_argument("--yt-password", metavar="PASSWORD", help="yt-dlp --password: account password")
+parser.add_argument("--yt-cookies", metavar="FILE", help="yt-dlp --cookies: cookies file")
 parser.add_argument("--extension-picky-0", action="store_true", help="yt-dlp: pass \"--extension-picky 0\" to ffmpeg; workaround for allowed extension error")
 parser.add_argument("--regen", default="", metavar="MKV", help="regenerate this .mkv (.comments.json and .info.json must exist and options videoID and yt-* are ignored)")
 parser.add_argument("videoID", type=argtype_nicovideo, help="video ID or URL", nargs="?")
@@ -70,11 +71,16 @@ assert not ((0 == len(args.regen)) and (args.videoID is None)), "videoID is requ
 
 if 0 == len(args.regen):
 
+    yt_args = (
+        ([] if not args.yt_username else ["--username", args.yt_username]) +
+        ([] if not args.yt_password else ["--password", args.yt_password]) +
+        ([] if not args.yt_cookies else ["--cookies", args.yt_cookies])
+    )
+
     # Get filename of video to be created (and check availability online)
     res1 = run([
         "python", os.path.join(YTDLP_DIR, "yt_dlp", "__main__.py"),
-        *([] if not args.yt_username else ["--username", args.yt_username]),
-        *([] if not args.yt_password else ["--password", args.yt_password]),
+        *yt_args,
         "--print", "filename",
         f"https://www.nicovideo.jp/watch/{args.videoID}",
     ], check=True, capture_output=True)
@@ -84,9 +90,9 @@ if 0 == len(args.regen):
     # Download video, thumbnail, ass, info json
     run([
         "python", os.path.join(YTDLP_DIR, "yt_dlp", "__main__.py"),
-        *([] if not args.yt_username else ["--username", args.yt_username]),
-        *([] if not args.yt_password else ["--password", args.yt_password]),
+        *yt_args,
         *([] if not args.extension_picky_0 else ["--downloader-args", "ffmpeg_i1:-extension_picky 0"]),
+        "--downloader-args", "ffmpeg_i1:-v 8",
         "-f", args.yt_format,
         "--write-info-json", "--add-metadata",
         "--write-thumbnail",
@@ -116,13 +122,13 @@ with open(f"{base}.info.json", "rb") as f:
     info = json.loads(decode(f.read()))
 duration   = info["duration"]    # ex. 123.0 (seconds)
 fps        = info.get("fps", 30) # ex. 14.0
-uploadDate = info["_api_data"]["video"]["registeredAt"] # ex. 2010-09-06T20:07:34+09:00
+uploadDate = info["timestamp"] # ex. 1283771254
 
 # Get video resolution (the info json contains this, but incovenient when regenerating)
 res_ffp = run([
     "ffprobe", "-v", "error",
     "-select_streams", "v:0", "-show_entries", "stream=width,height", "-output_format", "json",
-    f"{base}.mkv",
+    f"{base}.mp4",
 ], check=True, capture_output=True)
 # json_ffp = json.loads(res_ffp.stdout.decode())
 # width, height = json_ffp["streams"][0]["width"], json_ffp["streams"][0]["height"]
@@ -170,10 +176,9 @@ run([
 ], check=True)
 
 # Set output mtime to video upload date
-timestamp = datetime.datetime.fromisoformat(uploadDate).timestamp()
 for ext in ["mkv", "ass", "ass1", "comments.json", "info.json", "jpg", "mp4"]:
     if os.path.exists(f"{base}.{ext}"):
-        os.utime(f"{base}.{ext}", (timestamp, timestamp))
+        os.utime(f"{base}.{ext}", (uploadDate, uploadDate))
 
 # Remove intermediate files (optional)
 if not args.keep_files:
